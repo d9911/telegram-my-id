@@ -41,3 +41,20 @@ async fn handle_inline(bot: Bot, q: InlineQuery) -> HandlerResult {
     Ok(())
 }
 ```
+
+
+👋 Hi! I'm a bot for getting Telegram user information.
+
+🌟 Features:
+• Get user information (ID, name, username, etc.)
+• Support for 4 languages: Russian, English, Spanish, Korean
+• Easy ID copying
+• Automatic language detection from profile
+
+📋 Commands:
+/start - Start working with the bot
+/info_user - Get information about yourself
+/language - Select interface language
+/help - List all commands
+
+Start with /start command!
