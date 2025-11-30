@@ -24,6 +24,20 @@ pub fn get_translations() -> Translations {
     translations.insert("welcome_message", "👋 Welcome!");
     translations.insert("welcome_description", "I'm a bot for getting Telegram user information.\n\n📋 Available commands:\n• /info_user - get information about yourself\n• /help - list all commands\n• /language - change language");
     translations.insert("start_desc", "Start working with the bot");
+    translations.insert("test_desc", "Test bot functions");
+    translations.insert("test_title", "Bot Functions Test");
+    translations.insert("test_status", "System Status");
+    translations.insert("test_bot_online", "Bot is running");
+    translations.insert("test_translations", "Translations loaded");
+    translations.insert("test_formatting", "Formatting works");
+    translations.insert("test_current_lang", "Current Language");
+    translations.insert("test_selected_lang", "Selected language");
+    translations.insert("test_translations_examples", "Translation Examples");
+    translations.insert("test_formatting_demo", "Formatting Demo");
+    translations.insert("test_user_info", "Your Information");
+    translations.insert("test_statistics", "Statistics");
+    translations.insert("test_users_count", "Users with saved language");
+    translations.insert("test_footer", "All systems are working normally! ✅");
     
     translations
 }

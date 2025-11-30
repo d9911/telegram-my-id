@@ -24,6 +24,20 @@ pub fn get_translations() -> Translations {
     translations.insert("welcome_message", "👋 환영합니다!");
     translations.insert("welcome_description", "저는 Telegram 사용자 정보를 가져오는 봇입니다.\n\n📋 사용 가능한 명령:\n• /info_user - 자신에 대한 정보 가져오기\n• /help - 모든 명령 목록\n• /language - 언어 변경");
     translations.insert("start_desc", "봇과 함께 작업 시작");
+    translations.insert("test_desc", "봇 기능 테스트");
+    translations.insert("test_title", "봇 기능 테스트");
+    translations.insert("test_status", "시스템 상태");
+    translations.insert("test_bot_online", "봇이 실행 중입니다");
+    translations.insert("test_translations", "번역이 로드되었습니다");
+    translations.insert("test_formatting", "포맷팅이 작동합니다");
+    translations.insert("test_current_lang", "현재 언어");
+    translations.insert("test_selected_lang", "선택된 언어");
+    translations.insert("test_translations_examples", "번역 예제");
+    translations.insert("test_formatting_demo", "포맷팅 데모");
+    translations.insert("test_user_info", "귀하의 정보");
+    translations.insert("test_statistics", "통계");
+    translations.insert("test_users_count", "언어가 저장된 사용자 수");
+    translations.insert("test_footer", "모든 시스템이 정상적으로 작동합니다! ✅");
     
     translations
 }

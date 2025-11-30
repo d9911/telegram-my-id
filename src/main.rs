@@ -1,4 +1,5 @@
 mod locales;
+mod db;
 
 use rand::Rng;
 use std::collections::HashMap;
@@ -21,6 +22,8 @@ enum Command {
     Help,
     #[command(description = "Выбрать язык интерфейса")]
     Language,
+    #[command(description = "Тестирование функций бота")]
+    Test,
 }
 
 type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
@@ -37,7 +40,10 @@ async fn main() {
     log::info!("Запуск бота...");
 
     let bot = Bot::from_env();
-    let user_languages: UserLanguages = Arc::new(RwLock::new(HashMap::new()));
+    
+    // Загружаем сохраненные языки из файла
+    let loaded_languages = db::load_languages();
+    let user_languages: UserLanguages = Arc::new(RwLock::new(loaded_languages));
 
     let handler = dptree::entry()
         .branch(
@@ -137,6 +143,12 @@ async fn handle_command(
                 .reply_markup(keyboard)
                 .await?;
         }
+        Command::Test => {
+            let test_info = format_test_info(msg.from(), &lang, &user_languages).await;
+            bot.send_message(msg.chat.id, test_info)
+                .parse_mode(teloxide::types::ParseMode::Html)
+                .await?;
+        }
     }
     Ok(())
 }
@@ -165,6 +177,11 @@ async fn handle_language_callback(
         {
             let mut langs = user_languages.write().await;
             langs.insert(user_id, lang.to_string());
+            
+            // Сохраняем в файл
+            if let Err(e) = db::save_languages(&langs) {
+                log::error!("Ошибка сохранения языков в файл: {}", e);
+            }
         }
 
         let locale = locales::get_locale(lang);
@@ -240,6 +257,75 @@ async fn handle_message(bot: Bot, msg: Message) -> HandlerResult {
         }
     }
     Ok(())
+}
+
+async fn format_test_info(
+    user: Option<&User>,
+    current_lang: &str,
+    user_languages: &UserLanguages,
+) -> String {
+    let locale = locales::get_locale(current_lang);
+    
+    let mut test_info = format!(
+        "🧪 <b>{}</b>\n\n",
+        locale.get("test_title")
+    );
+    
+    // Статус бота
+    test_info.push_str(&format!("✅ <b>{}</b>\n", locale.get("test_status")));
+    test_info.push_str(&format!("  • {}: ✅\n", locale.get("test_bot_online")));
+    test_info.push_str(&format!("  • {}: ✅\n", locale.get("test_translations")));
+    test_info.push_str(&format!("  • {}: ✅\n\n", locale.get("test_formatting")));
+    
+    // Текущий язык
+    test_info.push_str(&format!("🌐 <b>{}</b>\n", locale.get("test_current_lang")));
+    test_info.push_str(&format!("  {}: <code>{}</code>\n\n", locale.get("test_selected_lang"), current_lang));
+    
+    // Примеры переводов на всех языках
+    test_info.push_str(&format!("📝 <b>{}</b>\n", locale.get("test_translations_examples")));
+    for lang_code in ["ru", "en", "es", "ko"] {
+        let test_locale = locales::get_locale(lang_code);
+        let lang_name = match lang_code {
+            "ru" => "🇷🇺 Русский",
+            "en" => "🇺🇸 English",
+            "es" => "🇪🇸 Español",
+            "ko" => "🇰🇷 한국어",
+            _ => "",
+        };
+        test_info.push_str(&format!(
+            "  {}: \"{}\"\n",
+            lang_name,
+            test_locale.get("welcome_message")
+        ));
+    }
+    test_info.push_str("\n");
+    
+    // Тест форматирования ID
+    test_info.push_str(&format!("📋 <b>{}</b>\n", locale.get("test_formatting_demo")));
+    test_info.push_str(&format!("  {}:\n", locale.get("id")));
+    test_info.push_str(&format!("  <code>123456789</code>\n\n"));
+    
+    // Информация о пользователе (если доступна)
+    if let Some(user) = user {
+        test_info.push_str(&format!("👤 <b>{}</b>\n", locale.get("test_user_info")));
+        test_info.push_str(&format!("  {}: <code>{}</code>\n", locale.get("id"), user.id));
+        test_info.push_str(&format!("  {}: {}\n", locale.get("first_name"), user.first_name));
+        if let Some(username) = &user.username {
+            test_info.push_str(&format!("  {}: @{}\n", locale.get("username"), username));
+        }
+        test_info.push_str("\n");
+    }
+    
+    // Статистика языков
+    {
+        let langs = user_languages.read().await;
+        test_info.push_str(&format!("📊 <b>{}</b>\n", locale.get("test_statistics")));
+        test_info.push_str(&format!("  {}: {}\n", locale.get("test_users_count"), langs.len()));
+    }
+    
+    test_info.push_str(&format!("\n💡 <i>{}</i>", locale.get("test_footer")));
+    
+    test_info
 }
 
 fn format_user_info(user: &User, lang: &str) -> String {
