@@ -216,7 +216,9 @@ async fn handle_command(
                     let mut waiting = waiting_for_range.write().await;
                     waiting.insert(user.id, true);
                 }
-                bot.send_message(msg.chat.id, locale.get("random_number_prompt")).await?;
+                bot.send_message(msg.chat.id, locale.get("random_number_prompt"))
+                    .parse_mode(teloxide::types::ParseMode::Html)
+                    .await?;
             }
         }
         Command::RandomChoice => {
@@ -228,7 +230,9 @@ async fn handle_command(
                     waiting.insert(user.id, true);
                 }
             }
-            bot.send_message(msg.chat.id, locale.get("random_choice_prompt")).await?;
+            bot.send_message(msg.chat.id, locale.get("random_choice_prompt"))
+                .parse_mode(teloxide::types::ParseMode::Html)
+                .await?;
         }
     }
     Ok(())
@@ -380,13 +384,17 @@ async fn handle_message(
                                     .await?;
                                 return Ok(());
                             } else {
-                                bot.send_message(msg.chat.id, locale.get("random_number_error_range")).await?;
+                                bot.send_message(msg.chat.id, locale.get("random_number_error_range"))
+                                    .parse_mode(teloxide::types::ParseMode::Html)
+                                    .await?;
                                 return Ok(());
                             }
                         }
                     }
                     
-                    bot.send_message(msg.chat.id, locale.get("random_number_error_format")).await?;
+                    bot.send_message(msg.chat.id, locale.get("random_number_error_format"))
+                        .parse_mode(teloxide::types::ParseMode::Html)
+                        .await?;
                     return Ok(());
                 }
             }
@@ -403,7 +411,9 @@ async fn handle_message(
                         let items: Vec<&str> = text.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
                         
                         if items.is_empty() {
-                            bot.send_message(msg.chat.id, locale.get("random_choice_error_empty")).await?;
+                            bot.send_message(msg.chat.id, locale.get("random_choice_error_empty"))
+                                .parse_mode(teloxide::types::ParseMode::Html)
+                                .await?;
                             return Ok(());
                         }
                         
@@ -446,7 +456,9 @@ async fn handle_message(
                         return Ok(());
                     } else {
                         // Пользователь ожидает список, но отправил не список
-                        bot.send_message(msg.chat.id, locale.get("random_choice_error_format")).await?;
+                        bot.send_message(msg.chat.id, locale.get("random_choice_error_format"))
+                            .parse_mode(teloxide::types::ParseMode::Html)
+                            .await?;
                         return Ok(());
                     }
                 }

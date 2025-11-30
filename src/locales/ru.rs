@@ -39,19 +39,19 @@ pub fn get_translations() -> Translations {
     translations.insert("test_users_count", "Пользователей с сохраненным языком");
     translations.insert("test_footer", "Все системы работают нормально! ✅");
     translations.insert("random_number_desc", "Сгенерировать случайное число");
-    translations.insert("random_number_prompt", "🎲 Введите диапазон чисел в формате:\n<code>от до</code>\n\nПримеры:\n• <code>1 100</code>\n• <code>1-100</code>\n• <code>1,100</code>");
+    translations.insert("random_number_prompt", "🎲 Введите диапазон чисел в формате:\n\n<pre><code>от до</code></pre>\n\n📝 Примеры:\n<pre><code>1 100</code></pre>\n<pre><code>1-100</code></pre>\n<pre><code>1,100</code></pre>");
     translations.insert("random_number_result", "Случайное число");
     translations.insert("random_number_selected", "Результат");
     translations.insert("random_number_range", "Диапазон");
-    translations.insert("random_number_error_format", "❌ Неверный формат. Используйте: <code>от до</code>\n\nПример: <code>1 100</code>");
+    translations.insert("random_number_error_format", "❌ Неверный формат.\n\nИспользуйте: <code>от до</code>\n\n📝 Пример: <code>1 100</code>");
     translations.insert("random_number_error_range", "❌ Минимальное значение должно быть меньше или равно максимальному");
     translations.insert("random_choice_desc", "Выбрать случайное значение из списка");
-    translations.insert("random_choice_prompt", "🎯 Отправьте список значений через запятую.\n\nПример:\n<code>яблоко, банан, апельсин, груша</code>");
+    translations.insert("random_choice_prompt", "🎯 Отправьте список значений через запятую.\n\n📝 Пример:\n<pre><code>яблоко, банан, апельсин, груша</code></pre>");
     translations.insert("random_choice_result", "Результат выбора");
     translations.insert("random_choice_selected", "Выбрано");
     translations.insert("random_choice_options", "Варианты");
-    translations.insert("random_choice_error_empty", "❌ Список не может быть пустым. Отправьте значения через запятую.");
-    translations.insert("random_choice_error_format", "❌ Отправьте список значений через запятую.\n\nПример: <code>яблоко, банан, апельсин</code>");
+    translations.insert("random_choice_error_empty", "❌ Список не может быть пустым.\n\nОтправьте значения через запятую.");
+    translations.insert("random_choice_error_format", "❌ Отправьте список значений через запятую.\n\n📝 Пример: <code>яблоко, банан, апельсин</code>");
     
     translations
 }
