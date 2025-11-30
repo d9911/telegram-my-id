@@ -38,6 +38,20 @@ pub fn get_translations() -> Translations {
     translations.insert("test_statistics", "Statistics");
     translations.insert("test_users_count", "Users with saved language");
     translations.insert("test_footer", "All systems are working normally! ✅");
+    translations.insert("random_number_desc", "Generate random number");
+    translations.insert("random_number_prompt", "🎲 Enter number range in format:\n<code>from to</code>\n\nExamples:\n• <code>1 100</code>\n• <code>1-100</code>\n• <code>1,100</code>");
+    translations.insert("random_number_result", "Random Number");
+    translations.insert("random_number_selected", "Result");
+    translations.insert("random_number_range", "Range");
+    translations.insert("random_number_error_format", "❌ Invalid format. Use: <code>from to</code>\n\nExample: <code>1 100</code>");
+    translations.insert("random_number_error_range", "❌ Minimum value must be less than or equal to maximum");
+    translations.insert("random_choice_desc", "Choose random value from list");
+    translations.insert("random_choice_prompt", "🎯 Send a list of values separated by commas.\n\nExample:\n<code>apple, banana, orange, pear</code>");
+    translations.insert("random_choice_result", "Choice Result");
+    translations.insert("random_choice_selected", "Chosen");
+    translations.insert("random_choice_options", "Options");
+    translations.insert("random_choice_error_empty", "❌ List cannot be empty. Send values separated by commas.");
+    translations.insert("random_choice_error_format", "❌ Send a list of values separated by commas.\n\nExample: <code>apple, banana, orange</code>");
     
     translations
 }

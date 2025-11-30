@@ -24,12 +24,20 @@ enum Command {
     Language,
     #[command(description = "Тестирование функций бота")]
     Test,
+    #[command(description = "Сгенерировать случайное число")]
+    RandomNumber,
+    #[command(description = "Выбрать случайное значение из списка")]
+    RandomChoice,
 }
 
 type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 
 // Хранилище выбранных языков пользователей (в памяти)
 type UserLanguages = Arc<RwLock<HashMap<UserId, String>>>;
+
+// Хранилище ожидающих ответа пользователей
+type WaitingForRange = Arc<RwLock<HashMap<UserId, bool>>>; // для команды random_number
+type WaitingForChoice = Arc<RwLock<HashMap<UserId, bool>>>; // для команды random_choice
 
 #[tokio::main]
 async fn main() {
@@ -41,9 +49,33 @@ async fn main() {
 
     let bot = Bot::from_env();
     
+    // Проверяем подключение к Telegram API
+    log::info!("Проверка подключения к Telegram API...");
+    match bot.get_me().await {
+        Ok(me) => {
+            let username = format!("@{}", me.username());
+            log::info!("✅ Бот успешно подключен: {} (ID: {})", username, me.id);
+        }
+        Err(e) => {
+            log::error!("❌ Ошибка подключения к Telegram API: {}", e);
+            log::error!("Возможные причины:");
+            log::error!("  1. Неправильный токен бота (проверьте .env файл)");
+            log::error!("  2. Проблемы с интернет-соединением");
+            log::error!("  3. Telegram API заблокирован в вашем регионе");
+            log::error!("  4. Firewall блокирует подключение");
+            log::error!("Попробуйте:");
+            log::error!("  - Проверить токен в .env файле");
+            log::error!("  - Проверить интернет-соединение");
+            log::error!("  - Использовать VPN, если Telegram заблокирован");
+            std::process::exit(1);
+        }
+    }
+    
     // Загружаем сохраненные языки из файла
     let loaded_languages = db::load_languages();
     let user_languages: UserLanguages = Arc::new(RwLock::new(loaded_languages));
+    let waiting_for_range: WaitingForRange = Arc::new(RwLock::new(HashMap::new()));
+    let waiting_for_choice: WaitingForChoice = Arc::new(RwLock::new(HashMap::new()));
 
     let handler = dptree::entry()
         .branch(
@@ -63,19 +95,44 @@ async fn main() {
                 .filter_command::<Command>()
                 .endpoint({
                     let user_languages = user_languages.clone();
+                    let waiting_for_range = waiting_for_range.clone();
+                    let waiting_for_choice = waiting_for_choice.clone();
                     move |bot: Bot, msg: Message, cmd: Command| {
                         let user_languages = user_languages.clone();
+                        let waiting_for_range = waiting_for_range.clone();
+                        let waiting_for_choice = waiting_for_choice.clone();
                         async move {
-                            handle_command(bot, msg, cmd, user_languages).await
+                            handle_command(bot, msg, cmd, user_languages, waiting_for_range, waiting_for_choice).await
                         }
                     }
                 }),
         )
         .branch(
             Update::filter_message()
-                .endpoint(handle_message),
+                .endpoint({
+                    let waiting_for_range = waiting_for_range.clone();
+                    let waiting_for_choice = waiting_for_choice.clone();
+                    let user_languages = user_languages.clone();
+                    move |bot: Bot, msg: Message| {
+                        let waiting_for_range = waiting_for_range.clone();
+                        let waiting_for_choice = waiting_for_choice.clone();
+                        let user_languages = user_languages.clone();
+                        async move {
+                            handle_message(bot, msg, waiting_for_range, waiting_for_choice, user_languages).await
+                        }
+                    }
+                }),
         );
 
+    log::info!("Бот готов к работе. Ожидание сообщений...");
+    log::warn!("⚠️  Если вы видите ошибки 'TimedOut' - это НЕ критично!");
+    log::warn!("Бот автоматически повторяет попытки подключения.");
+    log::warn!("Возможные причины таймаутов:");
+    log::warn!("  • Медленное интернет-соединение");
+    log::warn!("  • Telegram API заблокирован (используйте VPN)");
+    log::warn!("  • Временные проблемы на стороне Telegram");
+    log::warn!("Бот продолжит работать, просто попытки подключения могут занимать больше времени.");
+    
     Dispatcher::builder(bot, handler)
         .enable_ctrlc_handler()
         .build()
@@ -88,6 +145,8 @@ async fn handle_command(
     msg: Message,
     cmd: Command,
     user_languages: UserLanguages,
+    waiting_for_range: WaitingForRange,
+    waiting_for_choice: WaitingForChoice,
 ) -> HandlerResult {
     let lang = get_user_language(&user_languages, msg.from()).await;
 
@@ -148,6 +207,28 @@ async fn handle_command(
             bot.send_message(msg.chat.id, test_info)
                 .parse_mode(teloxide::types::ParseMode::Html)
                 .await?;
+        }
+        Command::RandomNumber => {
+            let locale = locales::get_locale(&lang);
+            if let Some(user) = msg.from() {
+                // Помечаем пользователя как ожидающего ответа
+                {
+                    let mut waiting = waiting_for_range.write().await;
+                    waiting.insert(user.id, true);
+                }
+                bot.send_message(msg.chat.id, locale.get("random_number_prompt")).await?;
+            }
+        }
+        Command::RandomChoice => {
+            let locale = locales::get_locale(&lang);
+            if let Some(user) = msg.from() {
+                // Помечаем пользователя как ожидающего список
+                {
+                    let mut waiting = waiting_for_choice.write().await;
+                    waiting.insert(user.id, true);
+                }
+            }
+            bot.send_message(msg.chat.id, locale.get("random_choice_prompt")).await?;
         }
     }
     Ok(())
@@ -241,20 +322,147 @@ async fn get_user_language(
     "en".to_string() // По умолчанию английский
 }
 
-async fn handle_message(bot: Bot, msg: Message) -> HandlerResult {
-    // Обрабатываем только текстовые сообщения (не команды, так как они обрабатываются выше)
+async fn handle_message(
+    bot: Bot,
+    msg: Message,
+    waiting_for_range: WaitingForRange,
+    waiting_for_choice: WaitingForChoice,
+    user_languages: UserLanguages,
+) -> HandlerResult {
     if let Some(text) = msg.text() {
-        // Пропускаем команды, так как они уже обработаны выше
-        if !text.starts_with('/') {
-            // Генерация случайного символа (ASCII буква) - делаем это до await
+        // Пропускаем команды
+        if text.starts_with('/') {
+            return Ok(());
+        }
+
+        if let Some(user) = msg.from() {
+            let user_id = user.id;
+            let lang = get_user_language(&user_languages, Some(user)).await;
+            let locale = locales::get_locale(&lang);
+
+            // Проверяем, ожидает ли пользователь ввода диапазона для random_number
+            {
+                let waiting = waiting_for_range.read().await;
+                if waiting.get(&user_id).copied().unwrap_or(false) {
+                    // Пользователь ожидает ввода диапазона
+                    drop(waiting);
+                    
+                    // Парсим диапазон (формат: "1-100" или "1 100" или "1,100")
+                    let range_text = text.replace(',', " ").replace('-', " ");
+                    let parts: Vec<&str> = range_text.split_whitespace().collect();
+                    
+                    if parts.len() >= 2 {
+                        if let (Ok(min), Ok(max)) = (parts[0].parse::<i64>(), parts[1].parse::<i64>()) {
+                            if min <= max {
+                                // Генерируем случайное число до await
+                                let random_num = {
+                                    let mut rng = rand::thread_rng();
+                                    rng.gen_range(min..=max)
+                                };
+                                
+                                // Убираем пользователя из ожидающих
+                                {
+                                    let mut waiting = waiting_for_range.write().await;
+                                    waiting.remove(&user_id);
+                                }
+                                
+                                let response = format!(
+                                    "🎲 <b>{}</b>\n\n📊 {}: <code>{}</code>\n📏 {}: <code>{}</code> - <code>{}</code>",
+                                    locale.get("random_number_result"),
+                                    locale.get("random_number_selected"),
+                                    random_num,
+                                    locale.get("random_number_range"),
+                                    min,
+                                    max
+                                );
+                                bot.send_message(msg.chat.id, response)
+                                    .parse_mode(teloxide::types::ParseMode::Html)
+                                    .await?;
+                                return Ok(());
+                            } else {
+                                bot.send_message(msg.chat.id, locale.get("random_number_error_range")).await?;
+                                return Ok(());
+                            }
+                        }
+                    }
+                    
+                    bot.send_message(msg.chat.id, locale.get("random_number_error_format")).await?;
+                    return Ok(());
+                }
+            }
+
+            // Проверяем, ожидает ли пользователь список для random_choice
+            {
+                let waiting = waiting_for_choice.read().await;
+                if waiting.get(&user_id).copied().unwrap_or(false) {
+                    // Пользователь ожидает список для random_choice
+                    drop(waiting);
+                    
+                    // Проверяем, содержит ли текст запятые
+                    if text.contains(',') {
+                        let items: Vec<&str> = text.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
+                        
+                        if items.is_empty() {
+                            bot.send_message(msg.chat.id, locale.get("random_choice_error_empty")).await?;
+                            return Ok(());
+                        }
+                        
+                        // Генерируем случайный индекс до await
+                        let chosen_index = {
+                            let mut rng = rand::thread_rng();
+                            rng.gen_range(0..items.len())
+                        };
+                        let chosen = items[chosen_index];
+                        
+                        // Убираем пользователя из ожидающих
+                        {
+                            let mut waiting = waiting_for_choice.write().await;
+                            waiting.remove(&user_id);
+                        }
+                        
+                        let options_list = items.iter().enumerate()
+                            .map(|(i, item)| {
+                                if i == chosen_index {
+                                    format!("<b>→ {}. {}</b>", i + 1, item)
+                                } else {
+                                    format!("   {}. {}", i + 1, item)
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        
+                        let response = format!(
+                            "🎯 <b>{}</b>\n\n✅ {}: <b>{}</b>\n\n📋 {}:\n{}",
+                            locale.get("random_choice_result"),
+                            locale.get("random_choice_selected"),
+                            chosen.trim(),
+                            locale.get("random_choice_options"),
+                            options_list
+                        );
+                        
+                        bot.send_message(msg.chat.id, response)
+                            .parse_mode(teloxide::types::ParseMode::Html)
+                            .await?;
+                        return Ok(());
+                    } else {
+                        // Пользователь ожидает список, но отправил не список
+                        bot.send_message(msg.chat.id, locale.get("random_choice_error_format")).await?;
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
+        // Обычная обработка сообщений (старая логика)
+        // Генерируем случайный символ до await
+        let response = {
             let random_char: char = {
                 let mut rng = rand::thread_rng();
                 rng.gen_range('A'..='Z')
             };
-
-            let response = format!("{} + {}", text, random_char);
-            bot.send_message(msg.chat.id, response).await?;
-        }
+            format!("{} + {}", text, random_char)
+        };
+        bot.send_message(msg.chat.id, response).await?;
     }
     Ok(())
 }

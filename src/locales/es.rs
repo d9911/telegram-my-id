@@ -38,6 +38,20 @@ pub fn get_translations() -> Translations {
     translations.insert("test_statistics", "Estadísticas");
     translations.insert("test_users_count", "Usuarios con idioma guardado");
     translations.insert("test_footer", "¡Todos los sistemas funcionan normalmente! ✅");
+    translations.insert("random_number_desc", "Generar número aleatorio");
+    translations.insert("random_number_prompt", "🎲 Ingresa el rango de números en formato:\n<code>desde hasta</code>\n\nEjemplos:\n• <code>1 100</code>\n• <code>1-100</code>\n• <code>1,100</code>");
+    translations.insert("random_number_result", "Número Aleatorio");
+    translations.insert("random_number_selected", "Resultado");
+    translations.insert("random_number_range", "Rango");
+    translations.insert("random_number_error_format", "❌ Formato inválido. Usa: <code>desde hasta</code>\n\nEjemplo: <code>1 100</code>");
+    translations.insert("random_number_error_range", "❌ El valor mínimo debe ser menor o igual al máximo");
+    translations.insert("random_choice_desc", "Elegir valor aleatorio de la lista");
+    translations.insert("random_choice_prompt", "🎯 Envía una lista de valores separados por comas.\n\nEjemplo:\n<code>manzana, plátano, naranja, pera</code>");
+    translations.insert("random_choice_result", "Resultado de la Elección");
+    translations.insert("random_choice_selected", "Elegido");
+    translations.insert("random_choice_options", "Opciones");
+    translations.insert("random_choice_error_empty", "❌ La lista no puede estar vacía. Envía valores separados por comas.");
+    translations.insert("random_choice_error_format", "❌ Envía una lista de valores separados por comas.\n\nEjemplo: <code>manzana, plátano, naranja</code>");
     
     translations
 }
