@@ -42,6 +42,9 @@ pub fn get_locale(lang: &str) -> Locale {
     }
 }
 
+// Старая функция, заменена на LocaleService::detect_language
+// Оставляем для совместимости, но помечаем как неиспользуемую
+#[allow(dead_code)]
 pub fn detect_language(user_lang: Option<&str>) -> &'static str {
     match user_lang {
         Some("ru") | Some("ru-RU") => "ru",

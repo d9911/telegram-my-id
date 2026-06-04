@@ -3,7 +3,11 @@ use std::fs;
 use std::path::Path;
 use teloxide::types::UserId;
 
+// Константы используются в старых функциях load_languages/save_languages
+// Оставляем для совместимости
+#[allow(dead_code)]
 const DB_DIR: &str = "src/db/data";
+#[allow(dead_code)]
 const DB_FILE: &str = "src/db/data/languages.json";
 
 // Структура для сериализации UserId как числа
@@ -47,6 +51,9 @@ mod serde_user_id_map {
     }
 }
 
+// Старая функция, больше не используется (заменена на FileLanguageRepository)
+// Оставляем для совместимости, но помечаем как неиспользуемую
+#[allow(dead_code)]
 pub fn load_languages() -> HashMap<UserId, String> {
     // Создаем директорию, если её нет
     if let Err(e) = fs::create_dir_all(DB_DIR) {
@@ -79,6 +86,9 @@ pub fn load_languages() -> HashMap<UserId, String> {
     }
 }
 
+// Старая функция, больше не используется (заменена на FileLanguageRepository)
+// Оставляем для совместимости, но помечаем как неиспользуемую
+#[allow(dead_code)]
 pub fn save_languages(languages: &HashMap<UserId, String>) -> Result<(), Box<dyn std::error::Error>> {
     // Создаем директорию, если её нет
     fs::create_dir_all(DB_DIR)?;
