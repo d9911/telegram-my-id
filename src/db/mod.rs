@@ -19,35 +19,24 @@ struct LanguageData {
 
 // Модуль для сериализации HashMap<UserId, String> как HashMap<u64, String>
 mod serde_user_id_map {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::collections::HashMap;
     use teloxide::types::UserId;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    pub fn serialize<S>(
-        map: &HashMap<UserId, String>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(map: &HashMap<UserId, String>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let converted: HashMap<u64, String> = map
-            .iter()
-            .map(|(k, v)| (k.0, v.clone()))
-            .collect();
+        let converted: HashMap<u64, String> = map.iter().map(|(k, v)| (k.0, v.clone())).collect();
         converted.serialize(serializer)
     }
 
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<HashMap<UserId, String>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<HashMap<UserId, String>, D::Error>
     where
         D: Deserializer<'de>,
     {
         let map: HashMap<u64, String> = HashMap::deserialize(deserializer)?;
-        Ok(map
-            .into_iter()
-            .map(|(k, v)| (UserId(k), v))
-            .collect())
+        Ok(map.into_iter().map(|(k, v)| (UserId(k), v)).collect())
     }
 }
 
@@ -67,18 +56,16 @@ pub fn load_languages() -> HashMap<UserId, String> {
     }
 
     match fs::read_to_string(DB_FILE) {
-        Ok(content) => {
-            match serde_json::from_str::<LanguageData>(&content) {
-                Ok(data) => {
-                    log::info!("Загружено {} языков из базы данных", data.languages.len());
-                    data.languages
-                }
-                Err(e) => {
-                    log::warn!("Ошибка парсинга JSON: {}, создаем новую базу", e);
-                    HashMap::new()
-                }
+        Ok(content) => match serde_json::from_str::<LanguageData>(&content) {
+            Ok(data) => {
+                log::info!("Загружено {} языков из базы данных", data.languages.len());
+                data.languages
             }
-        }
+            Err(e) => {
+                log::warn!("Ошибка парсинга JSON: {}, создаем новую базу", e);
+                HashMap::new()
+            }
+        },
         Err(e) => {
             log::warn!("Ошибка чтения файла {}: {}, создаем новую базу", DB_FILE, e);
             HashMap::new()
@@ -89,7 +76,9 @@ pub fn load_languages() -> HashMap<UserId, String> {
 // Старая функция, больше не используется (заменена на FileLanguageRepository)
 // Оставляем для совместимости, но помечаем как неиспользуемую
 #[allow(dead_code)]
-pub fn save_languages(languages: &HashMap<UserId, String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_languages(
+    languages: &HashMap<UserId, String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Создаем директорию, если её нет
     fs::create_dir_all(DB_DIR)?;
 
@@ -99,8 +88,7 @@ pub fn save_languages(languages: &HashMap<UserId, String>) -> Result<(), Box<dyn
 
     let json = serde_json::to_string_pretty(&data)?;
     fs::write(DB_FILE, json)?;
-    
+
     log::info!("Сохранено {} языков в базу данных", languages.len());
     Ok(())
 }
-

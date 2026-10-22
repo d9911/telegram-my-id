@@ -16,16 +16,13 @@ pub struct InfoUserUseCase {
 
 impl InfoUserUseCase {
     // Конструктор
-    pub fn new(
-        user_service: Arc<UserService>,
-        locale_service: Arc<LocaleService>,
-    ) -> Self {
+    pub fn new(user_service: Arc<UserService>, locale_service: Arc<LocaleService>) -> Self {
         Self {
             user_service,
             locale_service,
         }
     }
-    
+
     // Выполняет use case
     // user - пользователь, для которого нужно получить информацию
     // _lang - язык интерфейса (не используется напрямую, но может быть полезен в будущем)
@@ -41,4 +38,3 @@ impl InfoUserUseCase {
         self.user_service.format_user_info(user, locale_getter)
     }
 }
-

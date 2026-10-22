@@ -11,8 +11,7 @@ pub fn init_config() -> Result<(), Box<dyn std::error::Error>> {
     // .ok() - преобразует Result в Option (игнорирует ошибку)
     // В TypeScript это было бы: try { loadEnv(); } catch { /* ignore */ }
     dotenv().ok();
-    
+
     // Ok(()) - успешный результат без данных (как return в JS)
     Ok(())
 }
-

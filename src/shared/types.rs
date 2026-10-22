@@ -11,4 +11,3 @@ pub type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 
 // В Rust type alias - это как type в TypeScript:
 // type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
-

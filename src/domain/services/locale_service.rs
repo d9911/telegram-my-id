@@ -16,7 +16,7 @@ impl LocaleService {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     // Определяет язык пользователя на основе его языка в Telegram
     // &str - это строковый срез (как string в TypeScript, но без владения)
     // Option<&str> - это как string | null в TypeScript
@@ -42,4 +42,3 @@ impl Default for LocaleService {
         Self::new()
     }
 }
-

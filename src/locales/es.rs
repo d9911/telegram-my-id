@@ -2,7 +2,7 @@ use super::Translations;
 
 pub fn get_translations() -> Translations {
     let mut translations = Translations::new();
-    
+
     translations.insert("user_info_title", "👤 Información del usuario:");
     translations.insert("id", "🆔 ID");
     translations.insert("bot", "🤖 Bot");
@@ -12,7 +12,10 @@ pub fn get_translations() -> Translations {
     translations.insert("language", "🌐 Idioma");
     translations.insert("yes", "Sí");
     translations.insert("no", "No");
-    translations.insert("error_user_info", "❌ No se pudo obtener la información del usuario.");
+    translations.insert(
+        "error_user_info",
+        "❌ No se pudo obtener la información del usuario.",
+    );
     translations.insert("help_title", "Comandos disponibles:");
     translations.insert("info_user_desc", "Mostrar información del usuario");
     translations.insert("help_desc", "Mostrar ayuda");
@@ -37,22 +40,33 @@ pub fn get_translations() -> Translations {
     translations.insert("test_user_info", "Tu Información");
     translations.insert("test_statistics", "Estadísticas");
     translations.insert("test_users_count", "Usuarios con idioma guardado");
-    translations.insert("test_footer", "¡Todos los sistemas funcionan normalmente! ✅");
+    translations.insert(
+        "test_footer",
+        "¡Todos los sistemas funcionan normalmente! ✅",
+    );
     translations.insert("random_number_desc", "Generar número aleatorio");
     translations.insert("random_number_prompt", "🎲 Ingresa el rango de números en formato:\n\n<pre><code>desde hasta</code></pre>\n\n📝 Ejemplos:\n<pre><code>1 100</code></pre>\n<pre><code>1-100</code></pre>\n<pre><code>1,100</code></pre>");
     translations.insert("random_number_result", "Número Aleatorio");
     translations.insert("random_number_selected", "Resultado");
     translations.insert("random_number_range", "Rango");
-    translations.insert("random_number_error_format", "❌ Formato inválido.\n\nUsa: <code>desde hasta</code>\n\n📝 Ejemplo: <code>1 100</code>");
-    translations.insert("random_number_error_range", "❌ El valor mínimo debe ser menor o igual al máximo");
+    translations.insert(
+        "random_number_error_format",
+        "❌ Formato inválido.\n\nUsa: <code>desde hasta</code>\n\n📝 Ejemplo: <code>1 100</code>",
+    );
+    translations.insert(
+        "random_number_error_range",
+        "❌ El valor mínimo debe ser menor o igual al máximo",
+    );
     translations.insert("random_choice_desc", "Elegir valor aleatorio de la lista");
     translations.insert("random_choice_prompt", "🎯 Envía una lista de valores separados por comas.\n\n📝 Ejemplo:\n<pre><code>manzana, plátano, naranja, pera</code></pre>");
     translations.insert("random_choice_result", "Resultado de la Elección");
     translations.insert("random_choice_selected", "Elegido");
     translations.insert("random_choice_options", "Opciones");
-    translations.insert("random_choice_error_empty", "❌ La lista no puede estar vacía.\n\nEnvía valores separados por comas.");
+    translations.insert(
+        "random_choice_error_empty",
+        "❌ La lista no puede estar vacía.\n\nEnvía valores separados por comas.",
+    );
     translations.insert("random_choice_error_format", "❌ Envía una lista de valores separados por comas.\n\n📝 Ejemplo: <code>manzana, plátano, naranja</code>");
-    
+
     translations
 }
-

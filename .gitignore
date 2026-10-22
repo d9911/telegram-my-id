@@ -18,7 +18,6 @@ Temporary Items
 *.icloud
 debug/
 target/
-Cargo.lock
 **/*.rs.bk
 *.pdb
 rust-project.json
@@ -35,3 +34,7 @@ rust-project.json
 /target
 src/db/data/*.json
 .env
+/dist/
+.env.*
+!.env.example
+*.log

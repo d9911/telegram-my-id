@@ -1,0 +1,10 @@
+pub mod application;
+pub mod db;
+pub mod desktop;
+pub mod domain;
+pub mod infrastructure;
+pub mod locales;
+pub mod presentation;
+pub mod runtime;
+pub mod settings;
+pub mod shared;

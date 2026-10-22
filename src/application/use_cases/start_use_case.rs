@@ -21,7 +21,7 @@ impl StartUseCase {
     pub fn new(locale_service: Arc<LocaleService>) -> Self {
         Self { locale_service }
     }
-    
+
     // Выполняет use case
     // &self - ссылка на сам объект (не владеем, только читаем)
     // Option<&User> - пользователь может быть None (null)
@@ -40,10 +40,9 @@ impl StartUseCase {
         } else {
             "en" // Если пользователя нет, английский
         };
-        
+
         // Возвращаем код языка и ключ для приветственного сообщения
         // В Rust можно возвращать кортеж напрямую (без return)
         (user_lang.to_string(), "welcome_message".to_string())
     }
 }
-

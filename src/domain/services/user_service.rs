@@ -12,7 +12,7 @@ impl UserService {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     // Форматирует информацию о пользователе в строку
     // &User - это ссылка на User (не владеем объектом, только читаем)
     // В Rust & означает "borrow" (заимствование), как const reference в C++
@@ -22,7 +22,7 @@ impl UserService {
         // Fn(&str) -> &str - это closure (функция), которая принимает &str и возвращает &str
         // В TypeScript это было бы: (key: string) => string
         // impl Fn - это как function type в TypeScript
-        
+
         // format! - это макрос для форматирования строк (как template literals в JS)
         // {} - это placeholder для значения (как ${} в template literals)
         let mut info = format!(
@@ -66,4 +66,3 @@ impl Default for UserService {
         Self::new()
     }
 }
-

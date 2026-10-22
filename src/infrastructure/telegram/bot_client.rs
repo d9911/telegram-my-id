@@ -17,14 +17,14 @@ impl BotClient {
     pub fn new(bot: Bot) -> Self {
         Self { bot }
     }
-    
+
     // Получает внутренний Bot (для прямого доступа, если нужно)
     // &self - это как this в TypeScript (ссылка на сам объект)
     // &mut self - это как this, но с возможностью изменять объект
     pub fn inner(&self) -> &Bot {
         &self.bot
     }
-    
+
     // Проверяет подключение к Telegram API
     // async fn - асинхронная функция (как async function в JS)
     // Result<T, E> - это как Promise<T> в JS, но с явной обработкой ошибок
@@ -45,4 +45,3 @@ impl From<Bot> for BotClient {
         Self::new(bot)
     }
 }
-

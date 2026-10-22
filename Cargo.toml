@@ -1,14 +1,35 @@
 [package]
 name = "telegram-bot"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
+rust-version = "1.94"
+default-run = "telegram-my-id"
+description = "A native control room for a multilingual Telegram ID bot"
+publish = false
 
 [dependencies]
-teloxide = { version = "0.12", features = ["macros"] }
-tokio = { version = "1", features = ["full"] }
-rand = "0.8"
+teloxide = { version = "0.17", features = ["macros"] }
+tokio = { version = "1.54", features = ["full"] }
+rand = "0.10"
 pretty_env_logger = "0.5"
-log = "0.4"
-dotenvy = "0.15"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+log = "0.4.34"
+dotenvy = "0.15.7"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+eframe = { version = "0.35", default-features = false, features = ["accesskit", "default_fonts", "glow", "x11", "wayland"] }
+rfd = "0.17"
+chrono = "0.4.45"
+reqwest = { version = "0.12.28", default-features = false }
+
+[[bin]]
+name = "telegram-my-id"
+path = "src/main.rs"
+
+[[bin]]
+name = "telegram-bot"
+path = "src/bin/telegram-bot.rs"
+
+[profile.release]
+lto = "thin"
+strip = true

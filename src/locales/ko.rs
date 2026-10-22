@@ -2,7 +2,7 @@ use super::Translations;
 
 pub fn get_translations() -> Translations {
     let mut translations = Translations::new();
-    
+
     translations.insert("user_info_title", "👤 사용자 정보:");
     translations.insert("id", "🆔 ID");
     translations.insert("bot", "🤖 봇");
@@ -43,16 +43,27 @@ pub fn get_translations() -> Translations {
     translations.insert("random_number_result", "무작위 숫자");
     translations.insert("random_number_selected", "결과");
     translations.insert("random_number_range", "범위");
-    translations.insert("random_number_error_format", "❌ 잘못된 형식입니다.\n\n사용: <code>부터 까지</code>\n\n📝 예시: <code>1 100</code>");
-    translations.insert("random_number_error_range", "❌ 최소값은 최대값보다 작거나 같아야 합니다");
+    translations.insert(
+        "random_number_error_format",
+        "❌ 잘못된 형식입니다.\n\n사용: <code>부터 까지</code>\n\n📝 예시: <code>1 100</code>",
+    );
+    translations.insert(
+        "random_number_error_range",
+        "❌ 최소값은 최대값보다 작거나 같아야 합니다",
+    );
     translations.insert("random_choice_desc", "목록에서 무작위 값 선택");
     translations.insert("random_choice_prompt", "🎯 쉼표로 구분된 값 목록을 보내세요.\n\n📝 예시:\n<pre><code>사과, 바나나, 오렌지, 배</code></pre>");
     translations.insert("random_choice_result", "선택 결과");
     translations.insert("random_choice_selected", "선택됨");
     translations.insert("random_choice_options", "옵션");
-    translations.insert("random_choice_error_empty", "❌ 목록이 비어있을 수 없습니다.\n\n쉼표로 구분된 값을 보내세요.");
-    translations.insert("random_choice_error_format", "❌ 쉼표로 구분된 값 목록을 보내세요.\n\n📝 예시: <code>사과, 바나나, 오렌지</code>");
-    
+    translations.insert(
+        "random_choice_error_empty",
+        "❌ 목록이 비어있을 수 없습니다.\n\n쉼표로 구분된 값을 보내세요.",
+    );
+    translations.insert(
+        "random_choice_error_format",
+        "❌ 쉼표로 구분된 값 목록을 보내세요.\n\n📝 예시: <code>사과, 바나나, 오렌지</code>",
+    );
+
     translations
 }
-

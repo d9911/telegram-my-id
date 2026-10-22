@@ -8,4 +8,3 @@ pub mod user;
 pub use command::*;
 // user пока не экспортируется напрямую, используется через teloxide::types::User
 // pub use user::*;
-

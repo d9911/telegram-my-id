@@ -11,16 +11,25 @@ pub trait LanguageRepository: Send + Sync {
     // Получить язык пользователя по его ID
     // Option<String> - это как string | null в TypeScript
     // Если пользователя нет, вернется None (null)
-    async fn get_language(&self, user_id: UserId) -> Option<String>;
-    
+    fn get_language(
+        &self,
+        user_id: UserId,
+    ) -> impl std::future::Future<Output = Option<String>> + Send;
+
     // Сохранить язык пользователя
     // Result<(), E> - это как Promise<void> в TypeScript
     // Ok(()) означает успех без данных, Err(E) - ошибка
-    async fn save_language(&self, user_id: UserId, lang: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
-    
+    fn save_language(
+        &self,
+        user_id: UserId,
+        lang: String,
+    ) -> impl std::future::Future<Output = Result<(), Box<dyn std::error::Error + Send + Sync>>> + Send;
+
     // Получить все сохраненные языки (для статистики)
     // HashMap - это как Map в TypeScript или dict в Python
-    async fn get_all_languages(&self) -> std::collections::HashMap<UserId, String>;
+    fn get_all_languages(
+        &self,
+    ) -> impl std::future::Future<Output = std::collections::HashMap<UserId, String>> + Send;
 }
 
 // В Rust trait может иметь default implementation (как методы интерфейса в Java 8+):
@@ -29,4 +38,3 @@ pub trait LanguageRepository: Send + Sync {
 //         // реализация
 //     }
 // }
-

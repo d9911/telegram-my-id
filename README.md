@@ -1,328 +1,171 @@
-# Telegram User Info Bot
+# Telegram My ID
 
-Telegram бот для получения информации о пользователях с поддержкой многоязычности.
+<img src="assets/icons/telegram-my-id-128.png" width="112" alt="Clay-style Telegram My ID badge">
 
-## 🌟 Возможности
+[English](README.md) · [Русский](README.ru.md) · [Español](README.es.md)
 
-- 📋 Получение информации о пользователе Telegram
-- 🌐 Поддержка 4 языков: Русский, English, Español, 한국어
-- 📱 Легкое копирование ID пользователя
-- 🎯 Интуитивный интерфейс с кнопками выбора языка
-- 🎲 Генерация случайных чисел в указанном диапазоне
-- 🎯 Выбор случайного значения из списка
+**A small Telegram bot. A proper desktop home.**
 
-## 📋 Команды
+A native macOS control room for a Telegram user-ID bot: start and stop it, inspect
+connection events, configure credentials, and preview its commands without sending messages.
+The desktop UI is Russian. Bot replies support Russian, English, Spanish, and Korean.
 
-### `/start`
+Rust 2024 · Rust 1.94+ · egui / eframe 0.35 · teloxide 0.17
 
-Начать работу с ботом. **Умное определение языка и выбор интерфейса.**
+![Telegram My ID: cream canvas, clay badge, and bot controls](assets/screenshots/overview.png)
 
-**Как это работает:**
+This is the actual macOS application. The bot is stopped in this screenshot.
+Preview screenshots use the fictional Alex Example, ID `100000001`.
 
-1. 🎯 **Автоматическое определение языка**: Бот определяет ваш язык из профиля Telegram и показывает приветствие на вашем языке (если поддерживается)
-2. 🌐 **Выбор языка**: Появляются кнопки для выбора языка интерфейса:
-   - 🇷🇺 Русский
-   - 🇺🇸 English
-   - 🇪🇸 Español
-   - 🇰🇷 한국어
-3. ✅ **Сохранение выбора**: После нажатия на кнопку язык сразу сохраняется и все последующие команды будут на выбранном языке
+<details>
+<summary>Command preview</summary>
 
-**Пример использования:**
+![Local command preview with demonstration data](assets/screenshots/commands.png)
 
-```
-/start
-```
+</details>
 
-**Что происходит:**
+<details>
+<summary>Connection settings</summary>
 
-- Если ваш язык в Telegram - русский → приветствие на русском
-- Если ваш язык - английский → приветствие на английском
-- И так далее для всех поддерживаемых языков
-- Если язык не поддерживается → приветствие на английском (по умолчанию)
-- После выбора языка кнопкой - язык сохраняется и используется для всех команд
+![Connection settings with no credentials shown](assets/screenshots/settings.png)
 
-### `/info_user`
+</details>
 
-Показать информацию о текущем пользователе:
+## Features
 
-- 🆔 ID (легко копируется)
-- 🤖 Статус бота
-- 👋 Имя
-- 👤 Фамилия (если указана)
-- ✉️ Юзернейм (если указан)
-- 🌐 Язык интерфейса
+| Area | Behavior |
+| --- | --- |
+| Bot control | Manual start, cancellable connection, stop, and bounded dispatcher shutdown |
+| Connection | Checks the bot with Telegram before starting long polling; shows its username and ID |
+| Journal | Last 150 events in memory, credential redaction, no automatic log files |
+| Credentials | Read a selected `.env`, or enter a masked token for the current app session |
+| Settings | Saves only the `.env` path and data-folder path, never the bot token |
+| Preview | Seven commands in four languages, using existing formatters and synthetic data |
+| Storage | Existing language JSON format, atomic replacement, and a per-folder runtime lock |
+| Appearance | Warm cream canvas, teal/lavender/peach/ochre/pink cards, a 3D clay badge |
 
-**Пример использования:**
+Opening the app does not start the bot. Network requests begin after **Запустить бота**
+(Start bot). The app uses long polling and does not automatically remove an existing webhook.
+Do not run the same bot token in multiple polling clients at once.
 
-```
-/info_user
-```
+## Quick start on macOS
 
-**Пример ответа:**
+1. Build with `make build`, then open `dist/TelegramMyID.app` or run `make run`.
+2. Open **Настройки** (Settings). Select your `.env` containing `TELOXIDE_TOKEN`, or
+   choose **Ввести на время сессии** and paste the token from @BotFather.
+   In a macOS file dialog, Cmd+Shift+. reveals hidden files such as `.env`.
+3. Choose the data directory. To reuse an existing language database, choose the
+   old `src/db/data` directory. No files are moved automatically.
+4. Click **Сохранить пути** to remember the paths, then **Запустить бота**.
+5. Once Telegram has confirmed the bot, open it in Telegram and send `/start`.
 
-```
-👤 Информация о пользователе:
+Stop with **Остановить бота** or Esc. Cmd+Enter starts the bot when it is stopped.
+Closing the app stops its runtime. The app must remain open for the bot to serve requests.
 
-🆔 ID:
-215140425
+## Bot commands
 
-🤖 Бот: Нет
-👋 Имя: Den gu
-👤 Фамилия: 。デン
-✉️ Юзернейм: @d9911
-🌐 Язык: ru
-```
+| Command | Purpose |
+| --- | --- |
+| `/start` | Welcome and language selection |
+| `/info_user` | Your Telegram ID and profile information |
+| `/language` | Choose Russian, English, Spanish, or Korean |
+| `/help` | Available commands |
+| `/random_number` | Generate a number in a supplied range |
+| `/random_choice` | Choose an entry from a comma-separated list |
+| `/test` | Show bot diagnostics and translation examples |
 
-### `/language`
+The bot shows the sender's own information. It is not a service for finding
+private information about arbitrary Telegram accounts.
 
-Выбрать язык интерфейса. Доступны:
+## Configuration and data
 
-- 🇷🇺 Русский
-- 🇺🇸 English
-- 🇪🇸 Español
-- 🇰🇷 한국어
+`.env.example` documents the required key. Keep your actual `.env` outside the app bundle.
+An optional `TELOXIDE_PROXY` is also supported in the selected file.
+It is read each time the bot starts; its contents are not copied into app preferences.
+A manually entered token lives only in memory until the application closes.
 
-**Пример использования:**
+On macOS, the default desktop locations are:
 
-```
-/language
-```
-
-### `/test`
-
-Тестирование функций бота. Показывает:
-
-- ✅ Статус работы всех систем
-- 🌐 Текущий выбранный язык
-- 📝 Примеры переводов на всех языках (RU, EN, ES, KO)
-- 📋 Демонстрацию форматирования ID
-- 👤 Информацию о текущем пользователе
-- 📊 Статистику использования
-
-**Пример использования:**
-
-```
-/test
+```text
+~/Library/Application Support/TelegramMyID/settings.json
+~/Library/Application Support/TelegramMyID/data/languages.json
 ```
 
-**Что показывает:**
+The data folder can be changed in the UI. Existing JSON files use the same
+`{"languages":{"100000001":"ru"}}` structure. A malformed database is reported
+instead of being silently replaced. The `bot.lock` file may remain after shutdown;
+the operating-system lock, rather than the file's existence, controls ownership.
 
-- Статус бота (работает ли)
-- Загружены ли переводы
-- Работает ли форматирование
-- Текущий выбранный язык
-- Примеры приветствий на всех языках
-- Демонстрацию копируемого ID
-- Вашу информацию
-- Количество пользователей с сохраненным языком
+## Development and packaging
 
-### `/random_number`
+Use Rust 1.94+ and Xcode Command Line Tools. Run from the repository directory:
 
-Сгенерировать случайное число в указанном диапазоне.
+| Command | Action |
+| --- | --- |
+| `make` / `make dev` | Build and open the development GUI |
+| `make build` | Build the native release `.app` and architecture-specific ZIP |
+| `make run` | Open an existing release without rebuilding |
+| `make start` | Build and open the release |
+| `make cli` | Run the headless Telegram bot |
+| `make check` | Formatting, strict Clippy, and tests |
+| `make icons` | Re-export PNG, macOS ICNS, and ICO assets |
 
-**Как это работает:**
+Packaging reads only the executable, plist, public assets, README files, and licenses.
+It does not package `.env`, saved settings, or user-language databases. The default
+signature is local ad hoc; use `TELEGRAM_MY_ID_SIGNING_IDENTITY` for an existing signing
+identity. Notarization and publication are not performed.
 
-1. Отправьте команду `/random_number`
-2. Бот запросит диапазон чисел
-3. Отправьте диапазон в формате: `от до` (можно использовать пробел, дефис или запятую)
-4. Бот сгенерирует и покажет случайное число из указанного диапазона
+The current release package targets macOS on the architecture of the build machine.
+Windows and Linux runtime behavior have not been verified. The ICO asset is supplied;
+no Windows release package is claimed.
 
-**Пример использования:**
+Headless mode preserves the `telegram-bot` binary and legacy data location:
 
-```
-/random_number
-Бот: 🎲 Введите диапазон чисел в формате: от до
-     Примеры: 1 100, 1-100, 1,100
-
-Пользователь: 1 100
-Бот: 🎲 Случайное число: 42
-     Диапазон: 1 - 100
-```
-
-**Поддерживаемые форматы:**
-
-- `1 100` (пробел)
-- `1-100` (дефис)
-- `1,100` (запятая)
-
-**Обработка ошибок:**
-
-- Если формат неверный, бот покажет подсказку
-- Если минимальное значение больше максимального, бот сообщит об ошибке
-
-### `/random_choice`
-
-Выбрать случайное значение из списка, отправленного через запятую.
-
-**Как это работает:**
-
-1. Отправьте команду `/random_choice`
-2. Бот попросит отправить список значений через запятую
-3. Отправьте список значений, разделенных запятыми
-4. Бот выберет и покажет случайное значение из списка, а также все варианты
-
-**Пример использования:**
-
-```
-/random_choice
-Бот: 🎯 Отправьте список значений через запятую.
-     Пример: яблоко, банан, апельсин, груша
-
-Пользователь: яблоко, банан, апельсин, груша
-Бот: 🎯 Выбрано: банан
-
-     Варианты:
-     1. яблоко
-     2. банан
-     3. апельсин
-     4. груша
+```sh
+RUST_LOG=info cargo run --locked --bin telegram-bot
 ```
 
-**Особенности:**
+It reads `TELOXIDE_TOKEN` from the environment or local `.env`, uses `src/db/data`
+by default, and accepts an explicit `TELEGRAM_MY_ID_DATA_DIR`. Ctrl+C stops it.
+To share a database with the desktop app, configure the same absolute data directory.
 
-- Можно использовать любое количество значений
-- Значения автоматически очищаются от пробелов
-- Бот показывает выбранное значение и весь список для удобства
+## Verification
 
-**Обработка ошибок:**
-
-- Если список пустой, бот сообщит об ошибке
-
-### `/help`
-
-Показать список всех доступных команд.
-
-**Пример использования:**
-
-```
-/help
+```sh
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets --all-features -- -D warnings
+cargo test --locked
 ```
 
-## 🚀 Установка и запуск
+Tests cover existing command names and random functions, previews in all four languages,
+credential validation/redaction, storage round trips, malformed-file preservation,
+cancellation, runtime locking, and connection/polling/shutdown against a loopback-only API.
+No live Telegram messages are sent by the tests. Live operation with a real token needs
+checking separately by the bot owner.
 
-### Требования
+## Project layout
 
-- Rust 1.70+ ([установка](https://www.rust-lang.org/tools/install))
-- Telegram Bot Token (получить у [@BotFather](https://t.me/BotFather))
+| Path | Responsibility |
+| --- | --- |
+| `src/main.rs`, `src/desktop/` | Native window, design tokens, previews, worker control |
+| `src/runtime.rs` | Shared Telegram dispatcher and shutdown |
+| `src/settings.rs` | Credential validation, redaction, and path-only preferences |
+| `src/bin/telegram-bot.rs` | Headless entry point |
+| `src/application/`, `src/domain/` | Existing handlers, use cases, and domain services |
+| `src/infrastructure/` | Telegram and file-storage adapters |
+| `src/locales/` | RU / EN / ES / KO translations |
+| `assets/`, `scripts/`, `packaging/` | Icons, fonts, screenshots, and packaging |
 
-### Шаги установки
+## Assets and license
 
-1. **Клонируйте репозиторий:**
+The clay badge was generated for this project; the original source and exports are in
+`assets/icons/`. Icon export uses Node.js and macOS `sips`; normal app builds and runtime
+need no Node.js or NVM setup. All fonts are bundled, so previews do not fetch web fonts.
 
-   ```bash
-   git clone <repository-url>
-   cd telegram-bot
-   ```
+Inter, Noto Sans KR, and Noto Emoji are distributed with their SIL Open Font Licenses in
+[assets/fonts](assets/fonts). Their upstream sources are the Google Fonts repositories:
+[Inter](https://github.com/google/fonts/tree/main/ofl/inter),
+[Noto Sans KR](https://github.com/google/fonts/tree/main/ofl/notosanskr),
+[Noto Emoji](https://github.com/google/fonts/tree/main/ofl/notoemoji).
 
-2. **Создайте файл `.env` в корне проекта:**
-
-   ```bash
-   TELOXIDE_TOKEN=your_bot_token_here
-   ```
-
-   Замените `your_bot_token_here` на токен вашего бота.
-
-3. **Соберите проект:**
-
-   ```bash
-   cargo build --release
-   ```
-
-4. **Запустите бота:**
-
-   ```bash
-   cargo run
-   ```
-
-   Или используйте makefile:
-
-   ```bash
-   make start
-   ```
-
-## 🔧 Конфигурация
-
-### Переменные окружения
-
-- `TELOXIDE_TOKEN` - токен Telegram бота (обязательно)
-
-Файл `.env` автоматически загружается при запуске.
-
-## 📁 Структура проекта
-
-```
-telegram-bot/
-├── src/
-│   ├── main.rs           # Основной файл бота
-│   ├── locales/          # Переводы
-│   │   ├── mod.rs        # Модуль переводов
-│   │   ├── ru.rs         # Русский язык
-│   │   ├── en.rs         # Английский язык
-│   │   ├── es.rs         # Испанский язык
-│   │   └── ko.rs         # Корейский язык
-│   └── db/               # База данных
-│       ├── mod.rs        # Модуль работы с БД
-│       └── data/         # Данные (создается автоматически)
-│           └── languages.json  # Файл с сохраненными языками
-├── Cargo.toml            # Зависимости проекта
-├── .env                  # Переменные окружения (создать самостоятельно)
-└── README.md             # Этот файл
-```
-
-## 🌐 Поддерживаемые языки
-
-| Язык       | Код  | Статус              |
-| ---------- | ---- | ------------------- |
-| 🇷🇺 Русский | `ru` | ✅ Полная поддержка |
-| 🇺🇸 English | `en` | ✅ Полная поддержка |
-| 🇪🇸 Español | `es` | ✅ Полная поддержка |
-| 🇰🇷 한국어  | `ko` | ✅ Полная поддержка |
-
-Язык определяется автоматически из профиля пользователя Telegram, но может быть изменен вручную через команду `/language`.
-
-## 💡 Использование
-
-1. Запустите бота командой `/start`
-2. Выберите язык интерфейса из предложенных вариантов
-3. Используйте `/info_user` для получения информации о себе
-4. Используйте `/random_number` для генерации случайного числа
-5. Используйте `/random_choice` для выбора случайного значения из списка
-6. Используйте `/help` для просмотра всех доступных команд
-
-## 🛠️ Разработка
-
-### Добавление нового языка
-
-1. Создайте файл `src/locales/XX.rs` (где XX - код языка)
-2. Добавьте функцию `get_translations()` с переводами всех ключей
-3. Добавьте модуль в `src/locales/mod.rs`
-4. Обновите функцию `get_locale()` и `detect_language()`
-
-### Зависимости
-
-- `teloxide` - библиотека для работы с Telegram Bot API
-- `tokio` - асинхронный runtime
-- `rand` - генерация случайных чисел
-- `dotenvy` - загрузка переменных окружения из `.env`
-- `pretty_env_logger` - логирование
-- `serde` + `serde_json` - сериализация данных для сохранения языков
-
-### Хранение данных
-
-Бот автоматически сохраняет выбранные языки пользователей в файл `src/db/data/languages.json`. Данные сохраняются при каждом изменении языка и загружаются при запуске бота. Это означает, что выбранные языки сохраняются даже после перезапуска бота.
-
-## 📝 Лицензия
-
-Этот проект создан в образовательных целях.
-
-## 🤝 Вклад
-
-Вклад в проект приветствуется! Создавайте issues и pull requests.
-
-## 📞 Поддержка
-
-При возникновении проблем создайте issue в репозитории проекта.
-
----
-
-**Приятного использования! 🚀**
+Project terms: [LICENSE](LICENSE). Author: [d9911](https://github.com/d9911).

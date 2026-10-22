@@ -35,3 +35,46 @@ pub enum Command {
 // }
 // Но наш Command - простой enum без данных (как const enum в TypeScript)
 
+#[cfg(test)]
+mod tests {
+    use super::Command;
+    use teloxide::utils::command::BotCommands;
+
+    #[test]
+    fn existing_command_names_remain_compatible() {
+        assert!(matches!(
+            Command::parse("/start", "test_bot"),
+            Ok(Command::Start)
+        ));
+        assert!(matches!(
+            Command::parse("/info_user", "test_bot"),
+            Ok(Command::InfoUser)
+        ));
+        assert!(matches!(
+            Command::parse("/help", "test_bot"),
+            Ok(Command::Help)
+        ));
+        assert!(matches!(
+            Command::parse("/language", "test_bot"),
+            Ok(Command::Language)
+        ));
+        assert!(matches!(
+            Command::parse("/test", "test_bot"),
+            Ok(Command::Test)
+        ));
+        assert!(matches!(
+            Command::parse("/random_number", "test_bot"),
+            Ok(Command::RandomNumber)
+        ));
+        assert!(matches!(
+            Command::parse("/random_choice", "test_bot"),
+            Ok(Command::RandomChoice)
+        ));
+        assert!(matches!(
+            Command::parse("/start@test_bot", "test_bot"),
+            Ok(Command::Start)
+        ));
+        assert!(Command::parse("/start@another_bot", "test_bot").is_err());
+        assert!(Command::parse("/unknown", "test_bot").is_err());
+    }
+}

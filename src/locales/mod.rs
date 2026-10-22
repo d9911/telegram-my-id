@@ -1,7 +1,7 @@
-pub mod ru;
 pub mod en;
 pub mod es;
 pub mod ko;
+pub mod ru;
 
 use std::collections::HashMap;
 
@@ -54,4 +54,3 @@ pub fn detect_language(user_lang: Option<&str>) -> &'static str {
         _ => "en", // По умолчанию английский
     }
 }
-
