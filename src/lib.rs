@@ -1,4 +1,5 @@
 pub mod application;
+pub mod background;
 pub mod db;
 pub mod desktop;
 pub mod domain;

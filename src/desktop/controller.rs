@@ -1,15 +1,8 @@
 use crate::{
-    runtime::{self, BotEvent, RunConfig},
+    runtime::{BotEvent, RunConfig},
     settings,
 };
-use std::{
-    sync::{
-        Arc, Mutex,
-        mpsc::{self, Receiver, Sender},
-    },
-    thread::JoinHandle,
-};
-use tokio::sync::watch;
+use std::sync::{Arc, Mutex, mpsc::Sender};
 
 pub struct LogSink {
     sender: Mutex<Option<Sender<BotEvent>>>,
@@ -47,141 +40,121 @@ impl log::Log for Logger {
     }
     fn flush(&self) {}
 }
-struct Session {
-    stop: watch::Sender<bool>,
-    worker: JoinHandle<()>,
-}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Phase {
-    Idle,
-    Connecting,
-    Running,
-    Stopping,
+pub(crate) fn install_worker_logger(sender: Sender<BotEvent>, token: &str) {
+    let sink = Arc::new(LogSink {
+        sender: Mutex::new(Some(sender)),
+        token: Mutex::new(token.to_owned()),
+    });
+    if log::set_boxed_logger(Box::new(Logger(sink))).is_ok() {
+        log::set_max_level(log::LevelFilter::Warn);
+    }
 }
 
+pub use crate::background::Phase;
 pub struct Controller {
     pub phase: Phase,
     pub identity: Option<(String, u64)>,
     pub had_errors: bool,
-    session: Option<Session>,
-    receiver: Receiver<BotEvent>,
-    sender: Sender<BotEvent>,
-    log_sink: Arc<LogSink>,
+    pub keep_running_on_close: bool,
+    after: u64,
+    process_id: u32,
+    last_poll: Option<std::time::Instant>,
+    last_error: Option<String>,
 }
 impl Default for Controller {
     fn default() -> Self {
-        let (sender, receiver) = mpsc::channel();
-        let log_sink = Arc::new(LogSink {
-            sender: Mutex::new(Some(sender.clone())),
-            token: Mutex::new(String::new()),
-        });
-        if log::set_boxed_logger(Box::new(Logger(Arc::clone(&log_sink)))).is_ok() {
-            log::set_max_level(log::LevelFilter::Warn);
-        }
         Self {
             phase: Phase::Idle,
             identity: None,
             had_errors: false,
-            session: None,
-            receiver,
-            sender,
-            log_sink,
+            keep_running_on_close: false,
+            after: 0,
+            process_id: 0,
+            last_poll: None,
+            last_error: None,
         }
     }
 }
 impl Controller {
     pub fn active(&self) -> bool {
-        self.session.is_some()
+        self.phase != Phase::Idle
     }
     pub fn start(&mut self, config: RunConfig, ctx: eframe::egui::Context) -> Result<(), String> {
         if self.active() {
             return Err("Бот уже запускается или работает".into());
         }
-        settings::validate_token(&config.token)?;
-        if let Ok(mut token) = self.log_sink.token.lock() {
-            *token = config.token.clone();
-        }
-        let (stop, rx) = watch::channel(false);
-        let tx = self.sender.clone();
-        let worker = std::thread::Builder::new()
-            .name("telegram-my-id-runtime".into())
-            .spawn(move || {
-                let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    let runtime = tokio::runtime::Builder::new_multi_thread()
-                        .worker_threads(2)
-                        .enable_all()
-                        .build()
-                        .map_err(|_| "Не удалось создать рабочий поток Telegram".to_owned())?;
-                    let result = runtime.block_on(runtime::run(config, tx.clone(), rx));
-                    runtime.shutdown_timeout(std::time::Duration::from_secs(1));
-                    result
-                }));
-                match outcome {
-                    Ok(Err(error)) => {
-                        let _ = tx.send(BotEvent::Error(error));
-                    }
-                    Err(_) => {
-                        let _ = tx.send(BotEvent::Error(
-                            "Рабочий поток завершился с ошибкой. Перезапустите бота.".into(),
-                        ));
-                    }
-                    _ => {}
-                }
-                let _ = tx.send(BotEvent::Stopped);
-                ctx.request_repaint();
-            })
-            .map_err(|e| format!("Не удалось запустить бота: {e}"))?;
-        self.session = Some(Session { stop, worker });
+        crate::background::start(config)?;
         self.phase = Phase::Connecting;
-        self.had_errors = false;
+        self.after = 0;
         self.identity = None;
+        self.had_errors = false;
+        self.last_poll = None;
+        self.last_error = None;
+        ctx.request_repaint();
         Ok(())
     }
-    pub fn stop(&mut self) {
-        if let Some(session) = &self.session {
-            let _ = session.stop.send(true);
-            self.phase = Phase::Stopping;
-        }
+    pub fn stop(&mut self) -> Result<(), String> {
+        crate::background::stop()?;
+        self.phase = Phase::Stopping;
+        self.last_poll = None;
+        Ok(())
     }
     pub fn poll(&mut self) -> Vec<BotEvent> {
-        let events: Vec<_> = self.receiver.try_iter().take(100).collect();
-        for event in &events {
-            match event {
-                BotEvent::Connecting => {
-                    if self.phase != Phase::Stopping {
-                        self.phase = Phase::Connecting;
-                    }
-                }
-                BotEvent::Connected { username, id } => {
-                    self.identity = Some((username.clone(), *id));
-                    if self.phase != Phase::Stopping {
-                        self.phase = Phase::Running;
-                    }
-                }
-                BotEvent::Stopping => self.phase = Phase::Stopping,
-                BotEvent::Error(_) => self.had_errors = true,
-                BotEvent::Stopped => {}
-            }
-        }
-        // A finished signal may precede the thread's actual exit. Do not allow overlapping workers.
         if self
-            .session
-            .as_ref()
-            .is_some_and(|s| s.worker.is_finished())
+            .last_poll
+            .is_some_and(|time| time.elapsed() < std::time::Duration::from_millis(500))
         {
-            if let Some(session) = self.session.take() {
-                let _ = session.worker.join();
+            return Vec::new();
+        }
+        self.last_poll = Some(std::time::Instant::now());
+        match crate::background::status(self.after) {
+            Ok(Some(snapshot)) => {
+                if self.process_id != snapshot.process_id {
+                    self.after = 0;
+                    self.process_id = snapshot.process_id;
+                    self.last_poll = None;
+                }
+                self.phase = snapshot.phase;
+                self.identity = snapshot.identity;
+                self.had_errors = snapshot.had_errors;
+                self.last_error = None;
+                snapshot
+                    .events
+                    .into_iter()
+                    .map(|(sequence, event)| {
+                        self.after = self.after.max(sequence);
+                        event
+                    })
+                    .collect()
             }
-            self.phase = Phase::Idle;
-            if let Ok(mut token) = self.log_sink.token.lock() {
-                token.clear();
+            Ok(None) => {
+                let was_active = self.active();
+                self.phase = Phase::Idle;
+                self.identity = None;
+                self.after = 0;
+                self.last_error = None;
+                if was_active {
+                    vec![BotEvent::Stopped]
+                } else {
+                    Vec::new()
+                }
+            }
+            Err(error) => {
+                self.had_errors = true;
+                if self.last_error.as_ref() == Some(&error) {
+                    Vec::new()
+                } else {
+                    self.last_error = Some(error.clone());
+                    vec![BotEvent::Error(error)]
+                }
             }
         }
-        events
     }
 }
 impl Drop for Controller {
     fn drop(&mut self) {
-        self.stop();
+        if !self.keep_running_on_close && self.active() {
+            let _ = crate::background::stop();
+        }
     }
 }

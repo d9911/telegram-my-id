@@ -1,0 +1,42 @@
+{
+  "name": "TelegramMyID",
+  "binary": "telegram-my-id",
+  "identifier": "org.d9911.telegrammyid",
+  "windows_target": "x86_64-pc-windows-msvc",
+  "windows_directory": "windows-x64",
+  "windows_executable": "TelegramMyID.exe",
+  "linux_name": "telegram-my-id",
+  "mac_icon": "assets/icons/TelegramMyID.icns",
+  "windows_icon": "assets/icons/telegram-my-id.ico",
+  "linux_icon": "assets/icons/telegram-my-id-128.png",
+  "signing_variable": "TELEGRAM_MY_ID_SIGNING_IDENTITY",
+  "resources": [
+    "assets",
+    "docs/INSTALLERS.md",
+    "docs/BACKGROUND.md"
+  ],
+  "cli_binaries": [
+    "telegram-bot"
+  ],
+  "linux_pkgconfig": [
+    "xkbcommon",
+    "x11",
+    "openssl"
+  ],
+  "linux_runtime": [
+    "libx11-6",
+    "libxrandr2",
+    "libxcursor1",
+    "libxi6",
+    "libxinerama1",
+    "libxkbcommon0",
+    "libxkbcommon-x11-0",
+    "libgl1",
+    "libegl1",
+    "libfontconfig1",
+    "libwayland-client0",
+    "xdg-desktop-portal",
+    "xdg-desktop-portal-gtk",
+    "ca-certificates"
+  ]
+}

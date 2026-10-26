@@ -20,7 +20,7 @@ use std::{
 use teloxide::prelude::*;
 use tokio::sync::watch;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum BotEvent {
     Connecting,
     Connected { username: String, id: u64 },
@@ -28,6 +28,7 @@ pub enum BotEvent {
     Stopped,
     Error(String),
 }
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct RunConfig {
     pub token: String,
     pub proxy: Option<String>,

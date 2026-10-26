@@ -32,9 +32,37 @@ rust-project.json
 .history
 .ionide
 /target
-src/db/data/*.json
+/src/db/data/*
+!/src/db/data/.gitkeep
 .env
 /dist/
 .env.*
 !.env.example
 *.log
+
+# Local packaging tools and analysis caches
+/build/
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+
+# Local Python environments and code-signing material
+/.venv/
+.env-*
+*.pem
+*.key
+*.p12
+*.pfx
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Machine-local JetBrains and Finder metadata
+/.idea/
+/*.iml
+Icon[[:cntrl:]]
+desktop.ini
+Thumbs.db
+*.swp
+*.swo
+*~

@@ -1,6 +1,16 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+mod installer_lock;
+
 use telegram_bot::desktop::{self, appearance};
 fn main() -> eframe::Result {
+    let _installation_lock = installer_lock::acquire("org.d9911.telegrammyid")
+        .map_err(|error| eframe::Error::AppCreation(Box::new(error)))?;
+    if std::env::args().nth(1).as_deref() == Some("--background-worker") {
+        if telegram_bot::background::run_worker().is_err() {
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
             .with_title("Telegram My ID")

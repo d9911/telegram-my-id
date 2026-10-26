@@ -50,7 +50,7 @@ Do not run the same bot token in multiple polling clients at once.
 
 ## Quick start on macOS
 
-1. Build with `make build`, then open `dist/TelegramMyID.app` or run `make run`.
+1. Run `make setup`, `make doctor`, then `make local`; install the app from the DMG and open it from Applications. Building requires Python 3.11+ as well as Rust and native compiler tools.
 2. Open **Настройки** (Settings). Select your `.env` containing `TELOXIDE_TOKEN`, or
    choose **Ввести на время сессии** and paste the token from @BotFather.
    In a macOS file dialog, Cmd+Shift+. reveals hidden files such as `.env`.
@@ -60,7 +60,7 @@ Do not run the same bot token in multiple polling clients at once.
 5. Once Telegram has confirmed the bot, open it in Telegram and send `/start`.
 
 Stop with **Остановить бота** or Esc. Cmd+Enter starts the bot when it is stopped.
-Closing the app stops its runtime. The app must remain open for the bot to serve requests.
+Enable **Настройки → Закрытие окна → Продолжать работу бота после закрытия приложения** to keep the worker running after the GUI exits. Otherwise, closing the window stops it. Reopening the app reconnects to the worker.
 
 ## Bot commands
 
@@ -103,7 +103,7 @@ Use Rust 1.94+ and Xcode Command Line Tools. Run from the repository directory:
 | Command | Action |
 | --- | --- |
 | `make` / `make dev` | Build and open the development GUI |
-| `make build` | Build the native release `.app` and architecture-specific ZIP |
+| `make build` | Build GUI + CLI and the native installer |
 | `make run` | Open an existing release without rebuilding |
 | `make start` | Build and open the release |
 | `make cli` | Run the headless Telegram bot |
@@ -169,3 +169,16 @@ Inter, Noto Sans KR, and Noto Emoji are distributed with their SIL Open Font Lic
 [Noto Emoji](https://github.com/google/fonts/tree/main/ofl/notoemoji).
 
 Project terms: [LICENSE](LICENSE). Author: [d9911](https://github.com/d9911).
+
+
+## Native installers
+
+Run `make setup`, `make doctor`, then `make local` to build the current sources and
+open the native installer. `make run` opens the existing release. Windows also has
+`./package.ps1 setup`, `./package.ps1 doctor`, and `./package.ps1 local`, without GNU Make.
+Both GUI and headless binaries are packaged. Outside a checkout, the CLI defaults
+to per-user data storage when no legacy `src/db/data` or explicit data directory exists.
+See [docs/INSTALLERS.md](docs/INSTALLERS.md) for dependencies, outputs and verified platforms.
+
+
+Background behavior, credential lifetime and local stop commands: [docs/BACKGROUND.md](docs/BACKGROUND.md).

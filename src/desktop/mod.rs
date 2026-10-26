@@ -1,5 +1,5 @@
 pub mod appearance;
-mod controller;
+pub(crate) mod controller;
 mod preview;
 use crate::{
     runtime::{BotEvent, RunConfig},
@@ -43,6 +43,7 @@ pub struct App {
     started: Option<Instant>,
     closing: bool,
     help: bool,
+    behavior: crate::background::Behavior,
 }
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
@@ -63,23 +64,35 @@ impl App {
             ),
             egui::TextureOptions::LINEAR,
         );
+        let (behavior, behavior_error) = match crate::background::Behavior::load() {
+            Ok(value) => (value, None),
+            Err(error) => (crate::background::Behavior::default(), Some(error)),
+        };
+        let mut controller = Controller::default();
+        controller.keep_running_on_close = behavior.keep_running_on_close;
         let mut app = Self {
-            controller: Controller::default(),
+            controller,
             settings,
             token_source: TokenSource::File,
             temporary_token: String::new(),
             tab: Tab::Overview,
             brand,
             logs: VecDeque::new(),
-            error,
+            error: error.or(behavior_error),
             command: 1,
             language: 0,
             started: None,
             closing: false,
             help: false,
+            behavior,
         };
+        app.poll();
         app.log(
-            "Приложение открыто. Бот остановлен; подключение начнётся по кнопке.",
+            if app.controller.active() {
+                "Управление подключено к фоновому боту."
+            } else {
+                "Приложение открыто. Бот остановлен; подключение начнётся по кнопке."
+            },
             false,
         );
         app
@@ -133,8 +146,13 @@ impl App {
         }
     }
     fn stop(&mut self) {
-        self.controller.stop();
-        self.log("Запрошена остановка. Завершаю текущие обработчики…", false);
+        match self.controller.stop() {
+            Ok(()) => self.log("Запрошена остановка. Завершаю текущие обработчики…", false),
+            Err(error) => {
+                self.error = Some(error.clone());
+                self.log(error, true);
+            }
+        }
     }
     fn poll(&mut self) {
         for event in self.controller.poll() {
@@ -376,15 +394,19 @@ impl App {
                     );
                 }
                 ui.add_space(12.0);
-                let source = match self.token_source {
-                    TokenSource::File => self
-                        .settings
-                        .env_file
-                        .as_ref()
-                        .and_then(|p| p.file_name())
-                        .map(|s| format!("Источник токена: {}", s.to_string_lossy()))
-                        .unwrap_or_else(|| "Токен ещё не выбран".into()),
-                    TokenSource::Temporary => "Токен на время сессии".into(),
+                let source = if self.controller.active() {
+                    "Токен в памяти рабочего процесса".into()
+                } else {
+                    match self.token_source {
+                        TokenSource::File => self
+                            .settings
+                            .env_file
+                            .as_ref()
+                            .and_then(|p| p.file_name())
+                            .map(|s| format!("Источник токена: {}", s.to_string_lossy()))
+                            .unwrap_or_else(|| "Токен ещё не выбран".into()),
+                        TokenSource::Temporary => "Токен на время сессии".into(),
+                    }
                 };
                 ui.label(RichText::new(source).size(12.0).color(CREAM));
                 if let Some(started) = self.started {
@@ -569,7 +591,7 @@ impl App {
                     },
                     TokenSource::Temporary=>{
                         ui.add_sized([ui.available_width(),44.0],egui::TextEdit::singleline(&mut self.temporary_token).password(true).hint_text("123456789:токен от @BotFather").margin(egui::vec2(12.0,10.0)));
-                        ui.label(RichText::new("Только в памяти до закрытия приложения. Вставьте токен целиком без пробелов.").size(12.0).color(MUTED));
+                        ui.label(RichText::new("Только в памяти рабочего процесса до остановки бота. Вставьте токен целиком без пробелов.").size(12.0).color(MUTED));
                     },
                 }
                 ui.add_space(20.0);
@@ -583,6 +605,28 @@ impl App {
             if self.controller.active(){ui.label(RichText::new("Остановите бота, чтобы изменить подключение.").color(MUTED));}
         });
         ui.add_space(16.0);
+        ui.heading("Закрытие окна");
+        let previous = self.behavior;
+        if ui
+            .checkbox(
+                &mut self.behavior.keep_running_on_close,
+                "Продолжать работу бота после закрытия приложения",
+            )
+            .changed()
+        {
+            match self.behavior.save() {
+                Ok(()) => {
+                    self.controller.keep_running_on_close = self.behavior.keep_running_on_close;
+                    self.error = None;
+                }
+                Err(error) => {
+                    self.behavior = previous;
+                    self.error = Some(error);
+                }
+            }
+        }
+        ui.label(RichText::new("Сохраняется автоматически. Остановить фонового бота можно после повторного открытия окна. Работа продолжается, пока компьютер включён и не спит; автозапуск после перезагрузки не включается.").size(12.0).color(MUTED));
+        ui.add_space(16.0);
         ui.horizontal(|ui| self.run_button(ui, ctx));
         if let Some(error) = &self.error {
             ui.add_space(8.0);
@@ -594,7 +638,10 @@ impl eframe::App for App {
     fn ui(&mut self, root: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = root.ctx().clone();
         self.poll();
-        if ctx.input(|i| i.viewport().close_requested()) && self.controller.active() {
+        if ctx.input(|i| i.viewport().close_requested())
+            && self.controller.active()
+            && !self.behavior.keep_running_on_close
+        {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.closing = true;
             if self.controller.phase != Phase::Stopping {
@@ -630,8 +677,6 @@ impl eframe::App for App {
                         Tab::Settings => self.configuration(ui, &ctx),
                     });
             });
-        if self.controller.active() {
-            ctx.request_repaint_after(Duration::from_millis(50));
-        }
+        ctx.request_repaint_after(Duration::from_millis(500));
     }
 }
